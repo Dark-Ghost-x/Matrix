@@ -1,0 +1,306 @@
+#!/usr/bin/env python3
+
+import random
+import time
+import os
+import sys
+import signal
+
+class MatrixRainCMatrix:
+    def __init__(self):
+        self.width = 0
+        self.height = 0
+        self.running = False
+        self.update_terminal_size()
+
+        self.colors = [
+            '\033[38;5;46m',
+            '\033[38;5;82m',
+            '\033[38;5;118m',
+            '\033[38;5;154m',
+            '\033[38;5;190m',
+            '\033[38;5;226m',
+            '\033[38;5;10m',
+            '\033[38;5;2m',
+            '\033[38;5;28m',
+            '\033[38;5;34m',
+            '\033[38;5;40m',
+            '\033[38;5;76m',
+            '\033[38;5;112m',
+            '\033[38;5;148m',
+            '\033[1;38;5;46m',
+            '\033[1;38;5;82m',
+            '\033[1;38;5;118m'
+        ]
+
+        self.hot_colors = [
+            '\033[38;5;196m',
+            '\033[38;5;202m',
+            '\033[38;5;208m',
+            '\033[38;5;214m',
+            '\033[38;5;220m',
+            '\033[1;38;5;196m',
+            '\033[1;38;5;202m',
+            '\033[1;38;5;208m'
+        ]
+
+        self.ice_colors = [
+            '\033[38;5;39m',
+            '\033[38;5;45m',
+            '\033[38;5;51m',
+            '\033[38;5;87m',
+            '\033[38;5;123m',
+            '\033[1;38;5;39m',
+            '\033[1;38;5;45m',
+            '\033[1;38;5;51m'
+        ]
+
+        self.reset_color = '\033[0m'
+
+        self.characters = {
+            'classic': ['0', '1'],
+            'hex': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'],
+            'binary': ['0', '1'],
+            'katakana': ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク', 'ケ', ' コ', 'サ', 'シ', 'ス', ' セ', 'ソ'],
+            'extended': ['░', '▒', '▓', '█', '▄', '▀', '▌', '▐', '▬', '▲', '►', '▼', '◄', '●', '○', '◎', '◇', '◆'],
+            'matrix': ['Φ', 'Θ', 'Λ', 'Ξ', 'Π', 'Σ', 'Ψ', 'Ω', 'α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ'],
+            'fire': ['🔥', '🌋', '💥', '✨', '🌟', '⭐', '⚡', '🔥', '💫', '🎇'],
+            'ice': ['❄', '⛄', '🌨', '💎', '🔷', '🔹', '♦', '💠', '🔶', '🔸']
+        }
+
+        self.drops = []
+
+    def update_terminal_size(self):
+        try:
+            cols, rows = os.get_terminal_size()
+            self.width = cols
+            self.height = rows
+        except:
+            self.width = 80
+            self.height = 24
+
+    def clear_screen(self):
+        os.system('clear' if os.name != 'nt' else 'cls')
+
+    def hide_cursor(self):
+        sys.stdout.write('\033[?25l')
+        sys.stdout.flush()
+
+    def show_cursor(self):
+        sys.stdout.write('\033[?25h')
+        sys.stdout.flush()
+
+    def init_drops_cmatrix(self, mode='classic'):
+        self.drops = []
+        chars = self.characters[mode]
+
+        color_palette = self.colors
+        if mode == 'fire':
+            color_palette = self.hot_colors
+        elif mode == 'ice':
+            color_palette = self.ice_colors
+
+        for x in range(self.width):
+            if random.random() < 0.3:
+                length = random.randint(5, 25)
+                speed = random.uniform(0.05, 0.15)
+                start_pos = -length
+
+                if mode == 'fire':
+                    head_color = random.choice(['\033[1;38;5;196m', '\033[1;38;5;208m', '\033[1;38;5;220m'])
+                    tail_color = random.choice(['\033[38;5;88m', '\033[38;5;94m', '\033[38;5;130m'])
+                elif mode == 'ice':
+                    head_color = random.choice(['\033[1;38;5;39m', '\033[1;38;5;45m', '\033[1;38;5;51m'])
+                    tail_color = random.choice(['\033[38;5;23m', '\033[38;5;24m', '\033[38;5;25m'])
+                else:
+                    head_color = random.choice(['\033[1;38;5;46m', '\033[1;38;5;82m', '\033[1;38;5;118m', '\033[1;38;5;190m'])
+                    tail_color = random.choice(['\033[38;5;22m', '\033[38;5;28m', '\033[38;5;34m'])
+
+                self.drops.append({
+                    'x': x,
+                    'y': start_pos,
+                    'length': length,
+                    'speed': speed,
+                    'chars': [random.choice(chars) for _ in range(length)],
+                    'head_color': head_color,
+                    'body_color': random.choice(color_palette),
+                    'tail_color': tail_color,
+                    'active': True,
+                    'delay': random.randint(0, 50)
+                })
+
+    def draw_cmatrix_rain(self, mode='classic'):
+        self.running = True
+        self.update_terminal_size()
+        self.clear_screen()
+        self.hide_cursor()
+        self.init_drops_cmatrix(mode)
+
+        last_update = time.time()
+
+        try:
+            while self.running:
+                current_time = time.time()
+
+                if current_time - last_update < 0.03:
+                    time.sleep(0.001)
+                    continue
+
+                last_update = current_time
+
+                buffer = ['\033[H']
+
+                for drop in self.drops[:]:
+                    if drop['delay'] > 0:
+                        drop['delay'] -= 1
+                        continue
+
+                    drop['y'] += drop['speed']
+
+                    if drop['y'] > self.height + drop['length']:
+                        if random.random() < 0.02:
+                            drop['y'] = -drop['length']
+                            drop['delay'] = random.randint(0, 20)
+                        else:
+                            self.drops.remove(drop)
+                            continue
+
+                    for i in range(drop['length']):
+                        screen_y = int(drop['y']) - i
+
+                        if 0 <= screen_y < self.height:
+                            char_idx = i % len(drop['chars'])
+                            char = drop['chars'][char_idx]
+
+                            if i == 0:
+                                color = drop['head_color']
+                                if mode == 'fire':
+                                    char = random.choice(['🔥', '💥', '✨'])
+                                elif mode == 'ice':
+                                    char = random.choice(['❄', '💎', '🔷'])
+                                else:
+                                    char = random.choice(['0', '1', 'A', 'B', 'C', 'Φ', 'Θ'])
+                            elif i < 3:
+                                color = drop['head_color'] if mode in ['fire', 'ice'] else '\033[1;38;5;82m'
+                            elif i < 6:
+                                color = drop['body_color']
+                            else:
+                                color = drop['tail_color']
+                                if random.random() < 0.3:
+                                    char = ' '
+
+                            buffer.append(f"\033[{screen_y + 1};{drop['x'] + 1}H{color}{char}")
+
+                if random.random() < 0.3:
+                    chars = self.characters[mode]
+                    new_x = random.randint(0, self.width - 1)
+                    if not any(abs(d['x'] - new_x) < 2 for d in self.drops if d['delay'] <= 0):
+                        length = random.randint(8, 20)
+
+                        if mode == 'fire':
+                            head_color = random.choice(['\033[1;38;5;196m', '\033[1;38;5;208m'])
+                            tail_color = random.choice(['\033[38;5;88m', '\033[38;5;94m'])
+                        elif mode == 'ice':
+                            head_color = random.choice(['\033[1;38;5;39m', '\033[1;38;5;45m'])
+                            tail_color = random.choice(['\033[38;5;23m', '\033[38;5;24m'])
+                        else:
+                            head_color = random.choice(['\033[1;38;5;46m', '\033[1;38;5;82m'])
+                            tail_color = random.choice(['\033[38;5;22m', '\033[38;5;28m'])
+
+                        self.drops.append({
+                            'x': new_x,
+                            'y': -length,
+                            'length': length,
+                            'speed': random.uniform(0.08, 0.18),
+                            'chars': [random.choice(chars) for _ in range(length)],
+                            'head_color': head_color,
+                            'body_color': random.choice(self.colors if mode not in ['fire', 'ice'] else (self.hot_colors if mode == 'fire' else self.ice_colors)),
+                            'tail_color': tail_color,
+                            'active': True,
+                            'delay': 0
+                        })
+
+                sys.stdout.write(''.join(buffer))
+                sys.stdout.flush()
+
+        except KeyboardInterrupt:
+            self.running = False
+        finally:
+            self.show_cursor()
+
+    def print_logo(self):
+        logo_lines = [
+            "\033[1;38;5;196m██████╗ ███████╗██████╗",
+            "\033[1;38;5;208m ██╔══██╗██╔════╝██╔══██╗",
+            "\033[1;38;5;214m ██████╔╝█████╗  ██║  ██║",
+            "\033[1;38;5;220m ██╔══██╗██╔══╝  ██║  ██║",
+            "\033[1;38;5;226m ██║  ██║███████╗██████╔╝",
+            "\033[1;38;5;196m╚═╝  ╚═╝╚══════╝╚═════╝"
+        ]
+
+        for line in logo_lines:
+            print(line.center(self.width))
+
+        print()
+        print("\033[38;5;82m Creator Channel: t.me/Red_Rooted_ghost ".center(self.width))
+        print()
+
+    def run_menu(self):
+        signal.signal(signal.SIGWINCH, lambda sig, frame: self.update_terminal_size())
+
+        while True:
+            self.clear_screen()
+            self.print_logo()
+
+            print(f"\n\033[1;38;5;82m{'═' * min(64, self.width - 4)}\033[0m")
+            print(f"\033[1;38;5;46m[1]\033[0m \033[38;5;118mClassic CMatrix Binary Rain\033[0m")
+            print(f"\033[1;38;5;46m[2]\033[0m \033[38;5;118mHex Code Digital Storm\033[0m")
+            print(f"\033[1;38;5;46m[3]\033[0m \033[38;5;118mKatakana Character Rain\033[0m")
+            print(f"\033[1;38;5;46m[4]\033[0m \033[38;5;118mMatrix Greek Symbols\033[0m")
+            print(f"\033[1;38;5;46m[5]\033[0m \033[38;5;118mExtended ASCII Flow\033[0m")
+            print(f"\033[1;38;5;196m[6]\033[0m \033[38;5;196mFire Storm Effect\033[0m")
+            print(f"\033[1;38;5;39m[7]\033[0m \033[38;5;39mIce Crystal Rain\033[0m")
+            print(f"\033[1;38;5;196m[0]\033[0m \033[38;5;196mExit Program\033[0m")
+            print(f"\033[1;38;5;82m{'═' * min(64, self.width - 4)}\033[0m")
+
+            try:
+                choice = input(f"\n\033[1;38;5;46mSelect mode ► \033[0m")
+
+                if choice == '1':
+                    self.draw_cmatrix_rain('classic')
+                elif choice == '2':
+                    self.draw_cmatrix_rain('hex')
+                elif choice == '3':
+                    self.draw_cmatrix_rain('katakana')
+                elif choice == '4':
+                    self.draw_cmatrix_rain('matrix')
+                elif choice == '5':
+                    self.draw_cmatrix_rain('extended')
+                elif choice == '6':
+                    self.draw_cmatrix_rain('fire')
+                elif choice == '7':
+                    self.draw_cmatrix_rain('ice')
+                elif choice == '0':
+                    self.clear_screen()
+                    print(f"\n\033[1;38;5;46mTerminating matrix rain...\033[0m\n")
+                    sys.exit(0)
+                else:
+                    print(f"\033[1;38;5;196mInvalid option!\033[0m")
+                    time.sleep(1)
+
+            except KeyboardInterrupt:
+                print(f"\n\033[1;38;5;226mExiting...\033[0m")
+                time.sleep(1)
+                sys.exit(0)
+
+def main():
+    try:
+        os.system('clear')
+        cmatrix = MatrixRainCMatrix()
+        cmatrix.run_menu()
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

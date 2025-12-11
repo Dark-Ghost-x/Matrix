@@ -1,18 +1,32 @@
-# Matrix v:1.0
+# Matrix v:2.0
 
+## New Matrix Effects 2025
+A collection of diverse and unique Matrix-style effects for your terminal.
 
-## New Matrix Effects
+### Available Effects
+[1] Classic CMatrix Binary Rain  
+[2] Hex Code Digital Storm  
+[3] Katakana Character Rain  
+[4] Matrix Greek Symbols  
+[5] Extended ASCII Flow  
+[6] Fire Storm Effect  
+[7] Ice Crystal Rain  
+[8] Cyber Punk Effect  
+[9] Wave Flow Pattern  
+[10] Ring Circular Flow  
+[11] Spiral Motion Effect  
+# Help Menu (type 12 to access the guide)  
 
-## Installation:
+### Color Control
+- G: Green Matrix  
+- R: Red Fire  
+- B: Blue Ice  
+- P: Purple Cyber  
+- Y: Yellow Gold  
+- O: Ocean Blue  
 
+### Installation
 
-``git clone https://github.com/Dark-Ghost-x/Matrix``
-
-Run:
-
-``cd Matrix
+``git clone https://github.com/Dark-Ghost-x/Matrix
+cd Matrix
 python3 Matrix``
-
-## A tool menu will appear, allowing you to choose your favorite effects and enjoy the experience.
-
-## My Telegram channel: https://t.me/Red_Rooted_ghost
